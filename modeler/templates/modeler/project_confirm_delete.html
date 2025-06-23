@@ -1,0 +1,35 @@
+{% extends "modeler/base.html" %}
+
+{% block title %}Excluir Projeto{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h2 class="card-title mb-0">Excluir Projeto</h2>
+                </div>
+                <div class="card-body">
+                    <p class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Tem certeza que deseja excluir o projeto <strong>"{{ object.name }}"</strong>?
+                        Esta ação não pode ser desfeita e todos os dados relacionados serão perdidos.
+                    </p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'project_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Confirmar Exclusão
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

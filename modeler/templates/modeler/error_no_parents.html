@@ -1,13 +1,34 @@
 {% extends "modeler/base.html" %}
 
-{% block title %}Error - Data Vault Modeler{% endblock %}
+{% block title %}Erro - Data Vault Modeler{% endblock %}
 
 {% block content %}
-<div class="alert alert-warning" role="alert">
-  <h4 class="alert-heading">Cannot Create Satellite</h4>
-  <p>You must have at least one Hub or Link defined before you can create a Satellite to describe it.</p>
-  <hr>
-  <p class="mb-0">Please <a href="{% url 'create_hub' %}" class="alert-link">create a Hub</a> or a <a href="{% url 'create_link' %}" class="alert-link">Link</a> first.</p>
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-warning shadow-sm">
+                <div class="card-header bg-warning text-dark py-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <h3 class="card-title h5 mb-0">Não é possível criar Satellite</h3>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">Você precisa ter pelo menos um Hub ou Link definido antes de criar um Satellite para descrevê-lo.</p>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'create_hub' %}?project={{ request.GET.project }}" class="btn btn-primary">
+                            <i class="fas fa-database me-1"></i>Criar Hub
+                        </a>
+                        <a href="{% url 'create_link' %}?project={{ request.GET.project }}" class="btn btn-warning text-dark">
+                            <i class="fas fa-link me-1"></i>Criar Link
+                        </a>
+                        <a href="{% url 'project_detail' request.GET.project %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Voltar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<a href="{% url 'index' %}" class="btn btn-secondary mt-3">Back to Home</a>
 {% endblock %} 

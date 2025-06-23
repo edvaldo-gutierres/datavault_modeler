@@ -4,7 +4,14 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="mb-4">Data Vault Model Visualization</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Data Vault Model Visualization</h1>
+        {% if project %}
+        <a href="{% url 'project_detail' project.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Voltar para o Projeto
+        </a>
+        {% endif %}
+    </div>
     <p>This is a visual representation of your Data Vault model.</p>
 
     {% if error_message %}
@@ -25,55 +32,53 @@
 
 {% block scripts %}
 <script>
-    // Configuração do tema escuro do Mermaid
     mermaid.initialize({
         startOnLoad: true,
         theme: 'dark',
         er: {
-            useMaxWidth: true,
-            entityPadding: 40,
-            fontSize: 18,
-            fill: '#242424',
-            stroke: '#666',
-            minEntityWidth: 400,
-            minEntityHeight: 150,
-            entitySpacing: 50,
-            edgeSpacing: 50,
-            wrap: true,
-            diagramPadding: 20
-        },
-        themeVariables: {
-            darkMode: true,
-            background: '#1a1a1a',
-            mainBkg: '#242424',
-            textColor: '#fff',
-            lineColor: '#666',
-            fontSize: '18px',
-            fontFamily: 'monospace'
+            useMaxWidth: true
         }
     });
 
     document.getElementById('export-png')?.addEventListener('click', function() {
-        const svgElem = document.querySelector('#mermaid-diagram svg');
-        if (!svgElem) {
+        const svgOriginal = document.querySelector('#mermaid-diagram svg');
+        if (!svgOriginal) {
             alert('Diagrama não encontrado!');
             return;
         }
+
+        // 1. Crie um clone para não modificar o diagrama visível
+        const svgClone = svgOriginal.cloneNode(true);
+
+        // 2. Defina um tamanho explícito para a exportação e adicione preenchimento via viewBox
+        const bbox = svgOriginal.getBBox();
+        svgClone.setAttribute('width', bbox.width + 40);
+        svgClone.setAttribute('height', bbox.height + 40);
+        svgClone.setAttribute('viewBox', `${bbox.x - 20} ${bbox.y - 20} ${bbox.width + 40} ${bbox.height + 40}`);
+
+        // 3. Serialize o clone do SVG para string
         const serializer = new XMLSerializer();
-        const svgString = serializer.serializeToString(svgElem);
-        const canvas = document.createElement('canvas');
-        const bbox = svgElem.getBBox();
-        canvas.width = bbox.width + 40;
-        canvas.height = bbox.height + 40;
-        const ctx = canvas.getContext('2d');
+        const svgString = serializer.serializeToString(svgClone);
+
+        // 4. Crie um Data URL codificado em Base64, que é mais robusto
+        const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+
         const img = new Image();
-        const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
-        const url = URL.createObjectURL(svgBlob);
+        
         img.onload = function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = bbox.width + 40;
+            canvas.height = bbox.height + 40;
+            const ctx = canvas.getContext('2d');
+
+            // 5. Desenhe o fundo no canvas
             ctx.fillStyle = '#1a1a1a';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 20, 20);
-            URL.revokeObjectURL(url);
+
+            // 6. Desenhe a imagem do diagrama sobre o fundo
+            ctx.drawImage(img, 0, 0);
+
+            // 7. Inicie o download
             const pngUrl = canvas.toDataURL('image/png');
             const a = document.createElement('a');
             a.href = pngUrl;
@@ -82,101 +87,8 @@
             a.click();
             document.body.removeChild(a);
         };
-        img.src = url;
-    });
-
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-            // Definição das cores para tema escuro
-            const colorScheme = {
-                hub: {
-                    border: '#60a5fa',      // Azul claro
-                },
-                link: {
-                    border: '#fb923c',      // Laranja claro
-                },
-                satellite: {
-                    border: '#facc15',      // Amarelo claro
-                }
-            };
-
-            // Função para obter o tipo de entidade
-            function getEntityType(name) {
-                if (name.startsWith('H_')) return 'hub';
-                if (name.startsWith('L_')) return 'link';
-                if (name.startsWith('S_')) return 'satellite';
-                return null;
-            }
-
-            // Colorir entidades
-            document.querySelectorAll('.mermaid svg g').forEach(function(g) {
-                const label = g.querySelector('text');
-                if (!label) return;
-                
-                const name = label.textContent.trim();
-                const entityType = getEntityType(name);
-                if (!entityType) return;
-                
-                const colors = colorScheme[entityType];
-
-                // Aplica cores às bordas
-                g.querySelectorAll('rect').forEach(function(rect) {
-                    rect.setAttribute('stroke', colors.border);
-                    rect.setAttribute('stroke-width', '2');
-                });
-
-                // Aplica cores às linhas de grade internas
-                g.querySelectorAll('line').forEach(function(line) {
-                    line.setAttribute('stroke', colors.border);
-                });
-                
-                // Aplica cor ao texto
-                g.querySelectorAll('text').forEach(function(text) {
-                    text.setAttribute('fill', colors.border);
-                    text.style.fontSize = '14px';
-                });
-            });
-
-            // Colorir relacionamentos
-            document.querySelectorAll('.mermaid svg path').forEach(function(path) {
-                const relationshipText = path.parentElement.querySelector('text');
-                if (!relationshipText) return;
-
-                const text = relationshipText.textContent.trim();
-                if (text.includes('connects')) {
-                    path.setAttribute('stroke', colorScheme.link.border);
-                    path.setAttribute('marker-end', `url(#arrowhead-${colorScheme.link.border.substring(1)})`);
-                    relationshipText.setAttribute('fill', colorScheme.link.border);
-                } else if (text.includes('describes')) {
-                    path.setAttribute('stroke', colorScheme.satellite.border);
-                    path.setAttribute('marker-end', `url(#arrowhead-${colorScheme.satellite.border.substring(1)})`);
-                    relationshipText.setAttribute('fill', colorScheme.satellite.border);
-                }
-            });
-
-            // Criar marcadores de seta personalizados para cada cor
-            const defs = document.querySelector('.mermaid svg defs');
-            if (defs) {
-                Object.values(colorScheme).forEach(colors => {
-                    const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-                    const colorCode = colors.border.substring(1);
-                    marker.setAttribute('id', `arrowhead-${colorCode}`);
-                    marker.setAttribute('viewBox', '0 0 10 10');
-                    marker.setAttribute('refX', '9');
-                    marker.setAttribute('refY', '5');
-                    marker.setAttribute('markerWidth', '6');
-                    marker.setAttribute('markerHeight', '6');
-                    marker.setAttribute('orient', 'auto');
-                    
-                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    path.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
-                    path.setAttribute('fill', colors.border);
-                    
-                    marker.appendChild(path);
-                    defs.appendChild(marker);
-                });
-            }
-        }, 500);
+        
+        img.src = svgDataUrl;
     });
 </script>
 {% endblock %} 

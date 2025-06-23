@@ -1,22 +1,49 @@
 {% extends "modeler/base.html" %}
 
-{% block title %}Confirm Deletion{% endblock %}
+{% block title %}Confirmar Deleção - Data Vault Modeler{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <div class="card border-danger">
-            <div class="card-header bg-danger text-white">
-                <h3 class="card-title">Confirm Deletion</h3>
-            </div>
-            <div class="card-body">
-                <p>Are you sure you want to delete the Link "<strong>{{ link.name }}</strong>"?</p>
-                <p class="text-danger">This action cannot be undone. It will also delete any associated Satellites.</p>
-                <form method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                    <a href="{% url 'index' %}" class="btn btn-secondary">Cancel</a>
-                </form>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Confirmar Deleção</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Você tem certeza que deseja deletar o Link "{{ link.name }}"?</h5>
+                    
+                    {% if satellites %}
+                        <div class="alert alert-warning mt-3">
+                            <h6 class="alert-heading"><i class="fas fa-exclamation-circle"></i> Atenção!</h6>
+                            <p>Este Link possui os seguintes Satellites que também serão deletados:</p>
+                            
+                            <ul>
+                                {% for satellite in satellites %}
+                                    <li>{{ satellite.name }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Esta ação não pode ser desfeita!
+                    </div>
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="confirm" value="true">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'project_detail' link.project.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Sim, Deletar
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

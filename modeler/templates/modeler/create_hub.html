@@ -1,34 +1,69 @@
 {% extends "modeler/base.html" %}
 
-{% block title %}Create Hub - Data Vault Modeler{% endblock %}
+{% block title %}Criar Hub - Data Vault Modeler{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Create a New Hub</h3>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
-                        {{ form.name }}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-database text-primary me-2"></i>
+                        <h3 class="card-title h5 mb-0">Criar Novo Hub</h3>
                     </div>
-                    <div class="mb-3">
-                        <label for="{{ form.business_keys.id_for_label }}" class="form-label">Business Keys</label>
-                        {{ form.business_keys }}
-                        <div class="form-text">{{ form.business_keys.help_text }}</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
-                        {{ form.description }}
-                    </div>
-                    
-                    <button type="submit" class="btn btn-success">Save</button>
-                    <a href="{% url 'index' %}" class="btn btn-secondary">Cancel</a>
-                </form>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        {{ form.project }}
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Nome do Hub</label>
+                            {{ form.name }}
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                O nome do hub deve ser único e representar a entidade de negócio
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.business_key.id_for_label }}" class="form-label">Chave de Negócio</label>
+                            {{ form.business_key }}
+                            <div class="form-text text-muted">
+                                <i class="fas fa-key me-1"></i>
+                                Identificador único natural do negócio
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.load_date.id_for_label }}" class="form-label">Campo de Data de Carga</label>
+                            {{ form.load_date }}
+                            <div class="form-text text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                Nome do campo que armazenará a data de carga
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.record_source.id_for_label }}" class="form-label">Campo de Fonte</label>
+                            {{ form.record_source }}
+                            <div class="form-text text-muted">
+                                <i class="fas fa-database me-1"></i>
+                                Nome do campo que armazenará a fonte do registro
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Salvar Hub
+                            </button>
+                            <a href="{% url 'project_detail' request.GET.project %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

@@ -1,0 +1,140 @@
+{% extends "modeler/base.html" %}
+
+{% block title %}{{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ project.name }}</h1>
+        <div class="btn-group">
+            <a href="{% url 'project_update' project.pk %}" class="btn btn-outline-secondary">
+                <i class="fas fa-edit"></i> Editar Projeto
+            </a>
+            <a href="{% url 'project_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Descrição</h5>
+                    <p class="card-text">{{ project.description|default:"Sem descrição" }}</p>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            Criado em: {{ project.created_at|date:"d/m/Y H:i" }}<br>
+                            Última atualização: {{ project.updated_at|date:"d/m/Y H:i" }}
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Modelo Data Vault</h5>
+                    <div class="btn-group">
+                        <a href="{% url 'create_hub' %}?project={{ project.pk }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus"></i> Hub
+                        </a>
+                        <a href="{% url 'create_link' %}?project={{ project.pk }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus"></i> Link
+                        </a>
+                        <a href="{% url 'create_satellite' %}?project={{ project.pk }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus"></i> Satellite
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="border-bottom pb-2 text-primary">Hubs</h6>
+                            {% if hubs %}
+                                <ul class="list-unstyled">
+                                    {% for hub in hubs %}
+                                        <li class="mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>{{ hub.name }}</span>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{% url 'update_hub' hub.pk %}" class="btn btn-outline-secondary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="{% url 'delete_hub' hub.pk %}" class="btn btn-outline-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">Nenhum Hub criado</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <h6 class="border-bottom pb-2 text-warning">Links</h6>
+                            {% if links %}
+                                <ul class="list-unstyled">
+                                    {% for link in links %}
+                                        <li class="mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>{{ link.name }}</span>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{% url 'update_link' link.pk %}" class="btn btn-outline-secondary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="{% url 'delete_link' link.pk %}" class="btn btn-outline-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">Nenhum Link criado</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <h6 class="border-bottom pb-2 text-success">Satellites</h6>
+                            {% if satellites %}
+                                <ul class="list-unstyled">
+                                    {% for satellite in satellites %}
+                                        <li class="mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>{{ satellite.name }}</span>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{% url 'update_satellite' satellite.pk %}" class="btn btn-outline-secondary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="{% url 'delete_satellite' satellite.pk %}" class="btn btn-outline-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">Nenhum Satellite criado</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'visualize' %}?project={{ project.pk }}" class="btn btn-primary">
+                        <i class="fas fa-project-diagram"></i> Visualizar Diagrama
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,89 +1,167 @@
 {% extends "modeler/base.html" %}
 
-{% block title %}Update Satellite - {{ satellite.name }}{% endblock %}
+{% block title %}Atualizar Satellite - Data Vault Modeler{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Update Satellite: {{ satellite.name }}</h3>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="{{ form.parent.id_for_label }}" class="form-label">{{ form.parent.label }}</label>
-                        {{ form.parent }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
-                        {{ form.name }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Atributos do Satellite</label>
-                        {% if formset.non_form_errors %}
-                            <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
-                        {% endif %}
-                        <div id="attributes-formset">
-                            {{ formset.management_form }}
-                            {% for form in formset %}
-                                <div class="row mb-2 attribute-form">
-                                    <div class="col-md-6">
-                                        {{ form.name.label_tag }}{{ form.name }}
-                                        {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
-                                    </div>
-                                    <div class="col-md-4">
-                                        {{ form.tipo.label_tag }}{{ form.tipo }}
-                                        {% if form.tipo.errors %}<div class="text-danger small">{{ form.tipo.errors }}</div>{% endif %}
-                                    </div>
-                                    <div class="col-md-2 d-flex align-items-end">
-                                        <button type="button" class="btn btn-danger btn-remove-attribute">Remover</button>
-                                    </div>
-                                </div>
-                            {% endfor %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h4><i class="fas fa-satellite"></i> Editar Satellite</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            Por favor, corrija os erros abaixo.
                         </div>
-                        <button type="button" class="btn btn-primary" id="add-attribute">Adicionar atributo</button>
-                    </div>
-                    <button type="submit" class="btn btn-success">Update</button>
-                    <a href="{% url 'index' %}" class="btn btn-secondary">Cancel</a>
-                </form>
+                        {% endif %}
+
+                        {{ form.project }}
+
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Nome</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.name.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.parent.id_for_label }}" class="form-label">Hub ou Link Pai</label>
+                            {{ form.parent }}
+                            {% if form.parent.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.parent.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.load_date.id_for_label }}" class="form-label">Load Date</label>
+                            {{ form.load_date }}
+                            {% if form.load_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.load_date.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.record_source.id_for_label }}" class="form-label">Record Source</label>
+                            {{ form.record_source }}
+                            {% if form.record_source.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.record_source.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Atributos</h5>
+                                <button type="button" class="btn btn-success btn-sm" id="add-attribute">
+                                    <i class="fas fa-plus"></i> Adicionar Atributo
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                {{ formset.management_form }}
+                                <div id="attribute-forms">
+                                    {% for attribute_form in formset %}
+                                    <div class="attribute-form mb-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Nome do Atributo</label>
+                                                {{ attribute_form.name }}
+                                            </div>
+                                            <div class="col-md-5">
+                                                <label class="form-label">Tipo</label>
+                                                {{ attribute_form.tipo }}
+                                            </div>
+                                            <div class="col-md-1 d-flex align-items-end">
+                                                <button type="button" class="btn btn-danger btn-sm remove-attribute">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'project_detail' satellite.project.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Salvar
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+{% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        function updateFormIndices() {
-            const forms = document.querySelectorAll('.attribute-form');
-            document.getElementById('id_attributes-TOTAL_FORMS').value = forms.length;
-            forms.forEach(function(form, i) {
-                form.querySelectorAll('input, select, label').forEach(function(el) {
-                    if (el.name) el.name = el.name.replace(/attributes-\d+-/, 'attributes-' + i + '-');
-                    if (el.id) el.id = el.id.replace(/attributes-\d+-/, 'attributes-' + i + '-');
-                    if (el.htmlFor) el.htmlFor = el.htmlFor.replace(/attributes-\d+-/, 'attributes-' + i + '-');
-                });
+document.addEventListener('DOMContentLoaded', function() {
+    const formsetPrefix = 'attributes';
+    const container = document.querySelector('#attribute-forms');
+    const addButton = document.querySelector('#add-attribute');
+    const totalFormsInput = document.querySelector('#id_' + formsetPrefix + '-TOTAL_FORMS');
+    
+    function updateFormIndexes() {
+        const forms = container.querySelectorAll('.attribute-form');
+        forms.forEach((form, index) => {
+            form.querySelectorAll('input, select').forEach(input => {
+                input.name = input.name.replace(/-\d+-/, `-${index}-`);
+                input.id = input.id.replace(/-\d+-/, `-${index}-`);
             });
-        }
-        document.getElementById('add-attribute').onclick = function() {
-            const formsetDiv = document.getElementById('attributes-formset');
-            const forms = formsetDiv.querySelectorAll('.attribute-form');
-            const newForm = forms[0].cloneNode(true);
-            newForm.querySelectorAll('input').forEach(function(input) { input.value = ''; });
-            newForm.querySelectorAll('select').forEach(function(select) { select.selectedIndex = 0; });
-            formsetDiv.appendChild(newForm);
-            updateFormIndices();
-        };
-        document.getElementById('attributes-formset').addEventListener('click', function(e) {
-            if (e.target.classList.contains('btn-remove-attribute')) {
-                const forms = document.querySelectorAll('.attribute-form');
-                if (forms.length > 1) {
-                    e.target.closest('.attribute-form').remove();
-                    updateFormIndices();
-                }
-            }
         });
+        totalFormsInput.value = forms.length;
+    }
+
+    function getEmptyForm() {
+        const forms = container.querySelectorAll('.attribute-form');
+        if (forms.length > 0) {
+            const lastForm = forms[forms.length - 1];
+            const newForm = lastForm.cloneNode(true);
+            newForm.querySelectorAll('input').forEach(input => input.value = '');
+            newForm.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+            return newForm;
+        }
+        return null;
+    }
+
+    addButton.addEventListener('click', function() {
+        const emptyForm = getEmptyForm();
+        if (emptyForm) {
+            container.appendChild(emptyForm);
+            updateFormIndexes();
+        }
     });
+
+    container.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-attribute') || 
+            e.target.closest('.remove-attribute')) {
+            const form = e.target.closest('.attribute-form');
+            if (container.querySelectorAll('.attribute-form').length > 1) {
+                form.remove();
+                updateFormIndexes();
+            } else {
+                alert('O Satellite precisa ter pelo menos um atributo.');
+            }
+        }
+    });
+});
 </script>
+{% endblock %}
 {% endblock %} 

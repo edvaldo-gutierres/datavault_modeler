@@ -5,40 +5,49 @@ from django.utils import timezone
 
 # Create your models here.
 
+class Project(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
 class Hub(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
-    business_keys = models.CharField(max_length=500, help_text="Campos que formam a chave de negócio, separados por vírgula.")
-    load_date = models.DateTimeField(auto_now_add=True)
-    record_source = models.CharField(max_length=255, default='DefaultSource')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='hubs')
+    name = models.CharField(max_length=100)
+    business_key = models.CharField(max_length=100)
+    load_date = models.CharField(max_length=100, default='load_date')
+    record_source = models.CharField(max_length=100, default='record_source')
 
     def __str__(self):
         return self.name
 
 class Link(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    hubs = models.ManyToManyField(Hub)
-    description = models.TextField(blank=True, null=True)
-    load_date = models.DateTimeField(auto_now_add=True)
-    record_source = models.CharField(max_length=255, default='DefaultSource')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='links')
+    name = models.CharField(max_length=100)
+    hubs = models.ManyToManyField(Hub, related_name='links')
+    load_date = models.CharField(max_length=100, default='load_date')
+    record_source = models.CharField(max_length=100, default='record_source')
 
     def __str__(self):
         return self.name
 
 class Satellite(models.Model):
-    name = models.CharField(max_length=255)
-    attributes = models.TextField(help_text="Campos descritivos, separados por vírgula.")
-    load_date = models.DateTimeField(auto_now_add=True)
-    record_source = models.CharField(max_length=255, default='DefaultSource')
-    
-    # Generic relation to parent (Hub or Link)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='satellites')
+    name = models.CharField(max_length=100)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
-    parent = GenericForeignKey('content_type', 'object_id')
-
-    class Meta:
-        # Garante que o nome de um satélite seja único para seu pai
-        unique_together = ('name', 'content_type', 'object_id')
+    parent_object = GenericForeignKey('content_type', 'object_id')
+    attributes = models.JSONField(default=dict)
+    load_date = models.CharField(max_length=100, default='load_date')
+    record_source = models.CharField(max_length=100, default='record_source')
 
     def __str__(self):
-        return f"{self.name} (for {self.parent})"
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.content_type or not self.object_id:
+            raise ValueError("Satellite precisa ter um Hub ou Link pai definido.")
+        super().save(*args, **kwargs)

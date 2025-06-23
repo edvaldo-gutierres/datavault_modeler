@@ -1,37 +1,154 @@
 {% extends "modeler/base.html" %}
 
-{% block title %}Update Link - {{ link.name }}{% endblock %}
+{% block title %}Atualizar Link - Data Vault Modeler{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Update Link: {{ link.name }}</h3>
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Botão Voltar -->
+            <div class="mb-3">
+                <a href="{% url 'project_detail' link.project.pk %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar para o Projeto
+                </a>
             </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
-                        {{ form.name }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Hubs to Connect</label>
-                        <div class="form-check" style="max-height: 200px; overflow-y: auto;">
-                            {{ form.hubs }}
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-link text-warning me-2"></i>
+                            <h3 class="card-title h5 mb-0">Atualizar Link: {{ link.name }}</h3>
                         </div>
+                        <a href="{% url 'project_detail' link.project.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Fechar
+                        </a>
                     </div>
-                    <div class="mb-3">
-                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
-                        {{ form.description }}
-                    </div>
-                    
-                    <button type="submit" class="btn btn-success">Update</button>
-                    <a href="{% url 'index' %}" class="btn btn-secondary">Cancel</a>
-                </form>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        {{ form.project }}
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Nome do Link</label>
+                            {{ form.name }}
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                O nome do link deve ser único e representar o relacionamento
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Hubs para Conectar</label>
+                            <div class="hub-selection border rounded p-3" style="max-height: 250px; overflow-y: auto;">
+                                <div class="row g-2">
+                                    {% for checkbox in form.hubs %}
+                                    <div class="col-12">
+                                        <div class="card h-100">
+                                            <div class="card-body py-2 px-3">
+                                                <div class="form-check mb-0">
+                                                    <input type="checkbox" 
+                                                           name="{{ checkbox.data.name }}"
+                                                           value="{{ checkbox.data.value }}"
+                                                           id="{{ checkbox.id_for_label }}"
+                                                           class="form-check-input"
+                                                           {% if checkbox.data.selected %}checked{% endif %}>
+                                                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                                        <i class="fas fa-database text-primary me-1"></i>
+                                                        {{ checkbox.choice_label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="form-text text-muted mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Selecione pelo menos dois hubs para conectar
+                            </div>
+                            {% if form.hubs.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {{ form.hubs.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label for="{{ form.load_date.id_for_label }}" class="form-label">Campo de Data de Carga</label>
+                                    {{ form.load_date }}
+                                    <div class="form-text text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        Nome do campo que armazenará a data de carga
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label for="{{ form.record_source.id_for_label }}" class="form-label">Campo de Fonte</label>
+                                    {{ form.record_source }}
+                                    <div class="form-text text-muted">
+                                        <i class="fas fa-database me-1"></i>
+                                        Nome do campo que armazenará a fonte do registro
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Salvar Alterações
+                            </button>
+                            <a href="{% url 'project_detail' link.project.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.hub-selection {
+    background-color: #f8f9fa;
+}
+.hub-selection .card {
+    transition: all 0.2s ease-in-out;
+    border: 1px solid #dee2e6;
+}
+.hub-selection .card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+}
+.hub-selection .form-check-input:checked + .form-check-label {
+    color: #0d6efd;
+    font-weight: 500;
+}
+.hub-selection .form-check-input:checked + .form-check-label i {
+    color: #0d6efd;
+}
+.hub-selection .card-body {
+    cursor: pointer;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fazer o card inteiro clicável
+    document.querySelectorAll('.hub-selection .card-body').forEach(function(card) {
+        card.addEventListener('click', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                checkbox.checked = !checkbox.checked;
+            }
+        });
+    });
+});
+</script>
 {% endblock %} 

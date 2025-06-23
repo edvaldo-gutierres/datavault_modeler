@@ -4,14 +4,88 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="mb-4">Data Vault Model Visualization (Class Diagram)</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Data Vault Model Visualization (Class Diagram)</h1>
+        {% if project %}
+        <a href="{% url 'project_detail' project.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Voltar para o Projeto
+        </a>
+        {% endif %}
+    </div>
     <p>Visualização alternativa do seu modelo Data Vault, com cores por tipo de entidade.</p>
-    <div class="mb-3">
-        <label class="form-label">Mermaid code gerado (debug):</label>
-        <pre style="background:#f8f9fa; border:1px solid #ccc; padding:10px; font-size:12px;">{{ mermaid_data }}</pre>
-    </div>
-    <div class="mermaid">
-        {{ mermaid_data|safe }}
-    </div>
+
+    {% if error_message %}
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Error!</h4>
+            <p>Could not generate the model visualization.</p>
+            <hr>
+            <p class="mb-0"><strong>Details:</strong> {{ error_message }}</p>
+        </div>
+    {% else %}
+        <div class="mermaid" id="mermaid-diagram" style="background-color: #1a1a1a; padding: 20px; border-radius: 8px;">
+            {{ mermaid_data|safe }}
+        </div>
+        <button class="btn btn-primary mt-3" id="export-png">Exportar como PNG</button>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark'
+    });
+
+    document.getElementById('export-png')?.addEventListener('click', function() {
+        const svgOriginal = document.querySelector('#mermaid-diagram svg');
+        if (!svgOriginal) {
+            alert('Diagrama não encontrado!');
+            return;
+        }
+
+        // 1. Crie um clone para não modificar o diagrama visível
+        const svgClone = svgOriginal.cloneNode(true);
+
+        // 2. Defina um tamanho explícito para a exportação e adicione preenchimento via viewBox
+        const bbox = svgOriginal.getBBox();
+        svgClone.setAttribute('width', bbox.width + 40);
+        svgClone.setAttribute('height', bbox.height + 40);
+        svgClone.setAttribute('viewBox', `${bbox.x - 20} ${bbox.y - 20} ${bbox.width + 40} ${bbox.height + 40}`);
+
+        // 3. Serialize o clone do SVG para string
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(svgClone);
+
+        // 4. Crie um Data URL codificado em Base64, que é mais robusto
+        const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+
+        const img = new Image();
+        
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = bbox.width + 40;
+            canvas.height = bbox.height + 40;
+            const ctx = canvas.getContext('2d');
+
+            // 5. Desenhe o fundo no canvas
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 6. Desenhe a imagem do diagrama sobre o fundo
+            ctx.drawImage(img, 0, 0);
+
+            // 7. Inicie o download
+            const pngUrl = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = pngUrl;
+            a.download = 'datavault_classdiagram.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
+        
+        img.src = svgDataUrl;
+    });
+</script>
 {% endblock %} 

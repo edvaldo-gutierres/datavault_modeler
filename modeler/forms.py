@@ -1,68 +1,95 @@
 from django import forms
-from .models import Hub, Link, Satellite
+from .models import Hub, Link, Satellite, Project
 from django.contrib.contenttypes.models import ContentType
-from django.forms import formset_factory
+
+class ProjectForm(forms.ModelForm):
+    class Meta:
+        model = Project
+        fields = ['name', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
 
 class HubForm(forms.ModelForm):
     class Meta:
         model = Hub
-        fields = ['name', 'description', 'business_keys']
+        fields = ['project', 'name', 'business_key', 'load_date', 'record_source']
         widgets = {
+            'project': forms.HiddenInput(),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'business_keys': forms.TextInput(attrs={'class': 'form-control'}),
+            'business_key': forms.TextInput(attrs={'class': 'form-control'}),
+            'load_date': forms.TextInput(attrs={'class': 'form-control'}),
+            'record_source': forms.TextInput(attrs={'class': 'form-control'})
         }
 
 class LinkForm(forms.ModelForm):
     class Meta:
         model = Link
-        fields = ['name', 'hubs', 'description']
+        fields = ['project', 'name', 'hubs', 'load_date', 'record_source']
         widgets = {
+            'project': forms.HiddenInput(),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'hubs': forms.CheckboxSelectMultiple,
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'hubs': forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+            'load_date': forms.TextInput(attrs={'class': 'form-control'}),
+            'record_source': forms.TextInput(attrs={'class': 'form-control'})
         }
-
-class SatelliteForm(forms.ModelForm):
-    parent = forms.ChoiceField(label="Parent (Hub or Link)")
-
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        # Popula o campo 'parent' com todos os Hubs e Links existentes
-        hubs = Hub.objects.all()
-        links = Link.objects.all()
-        hub_content_type = ContentType.objects.get_for_model(Hub)
-        link_content_type = ContentType.objects.get_for_model(Link)
-
-        self.fields['parent'].choices = [
-            (f"{hub_content_type.id}-{hub.id}", f"Hub: {hub.name}") for hub in hubs
-        ] + [
-            (f"{link_content_type.id}-{link.id}", f"Link: {link.name}") for link in links
-        ]
-        self.fields['parent'].widget.attrs.update({'class': 'form-select'})
-        self.fields['attributes'].required = False
-
-    class Meta:
-        model = Satellite
-        fields = ['name', 'attributes']
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'attributes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
+        if 'initial' in kwargs and 'project' in kwargs['initial']:
+            project = kwargs['initial']['project']
+            self.fields['hubs'].queryset = Hub.objects.filter(project=project)
 
 class AttributeForm(forms.Form):
     name = forms.CharField(
-        label='Nome do atributo', 
-        max_length=100, 
-        required=True,
-        widget=forms.TextInput(attrs={'class': 'form-control'}),
-        error_messages={'required': 'O nome do atributo é obrigatório.'}
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Nome do atributo'
+        })
     )
     tipo = forms.ChoiceField(
-        label='Tipo',
-        choices=[('string', 'String'), ('int', 'Inteiro'), ('float', 'Decimal'), ('date', 'Data'), ('bool', 'Booleano')],
-        widget=forms.Select(attrs={'class': 'form-select'})
+        choices=[
+            ('string', 'String'),
+            ('integer', 'Integer'),
+            ('decimal', 'Decimal'),
+            ('datetime', 'DateTime'),
+            ('boolean', 'Boolean')
+        ],
+        widget=forms.Select(attrs={'class': 'form-control'})
     )
 
-AttributeFormSet = formset_factory(AttributeForm, extra=1, can_delete=True) 
+class SatelliteForm(forms.ModelForm):
+    parent = forms.ChoiceField(
+        choices=[],
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Hub ou Link Pai'
+    )
+
+    class Meta:
+        model = Satellite
+        fields = ['project', 'name', 'load_date', 'record_source']
+        widgets = {
+            'project': forms.HiddenInput(),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'load_date': forms.TextInput(attrs={'class': 'form-control'}),
+            'record_source': forms.TextInput(attrs={'class': 'form-control'})
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'initial' in kwargs and 'project' in kwargs['initial']:
+            project = kwargs['initial']['project']
+            # Busca Hubs do projeto
+            hub_ct = ContentType.objects.get_for_model(Hub)
+            hubs = Hub.objects.filter(project=project)
+            hub_choices = [(f"{hub_ct.id}-{hub.id}", f"Hub: {hub.name}") for hub in hubs]
+            
+            # Busca Links do projeto
+            link_ct = ContentType.objects.get_for_model(Link)
+            links = Link.objects.filter(project=project)
+            link_choices = [(f"{link_ct.id}-{link.id}", f"Link: {link.name}") for link in links]
+            
+            # Combina as escolhas
+            self.fields['parent'].choices = [('', '-- Selecione --')] + hub_choices + link_choices 
