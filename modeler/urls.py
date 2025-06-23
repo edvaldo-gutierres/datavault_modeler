@@ -13,4 +13,5 @@ urlpatterns = [
     path("satellites/<int:pk>/update/", views.update_satellite, name="update_satellite"),
     path("satellites/<int:pk>/delete/", views.delete_satellite, name="delete_satellite"),
     path("visualize/", views.visualize_model, name="visualize_model"),
+    path("visualize-classdiagram/", views.visualize_classdiagram, name="visualize_classdiagram"),
 ] 

@@ -1,0 +1,17 @@
+{% extends "modeler/base.html" %}
+
+{% block title %}Data Vault Model Visualization (Class Diagram){% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Data Vault Model Visualization (Class Diagram)</h1>
+    <p>Visualização alternativa do seu modelo Data Vault, com cores por tipo de entidade.</p>
+    <div class="mb-3">
+        <label class="form-label">Mermaid code gerado (debug):</label>
+        <pre style="background:#f8f9fa; border:1px solid #ccc; padding:10px; font-size:12px;">{{ mermaid_data }}</pre>
+    </div>
+    <div class="mermaid">
+        {{ mermaid_data|safe }}
+    </div>
+</div>
+{% endblock %} 

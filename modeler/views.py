@@ -3,6 +3,8 @@ from .models import Hub, Link, Satellite
 from .forms import HubForm, LinkForm, SatelliteForm, AttributeFormSet
 from django.contrib.contenttypes.models import ContentType
 from django.contrib import messages
+from django.http import HttpResponse
+import re
 
 # Create your views here.
 
@@ -206,12 +208,12 @@ def visualize_model(request):
             if satellite.content_type.model == 'hub':
                 parent_name = hub_name_map.get(satellite.object_id)
                 if parent_name:
-                    safe_parent = parent_name.replace(' ', '_')
+                    safe_parent = re.sub(r'\W+', '_', parent_name)
                     parent_fk = f'        string HK_{safe_parent}'
             elif satellite.content_type.model == 'link':
                 parent_name = link_name_map.get(satellite.object_id)
                 if parent_name:
-                    safe_parent = parent_name.replace(' ', '_')
+                    safe_parent = re.sub(r'\W+', '_', parent_name)
                     parent_fk = f'        string HK_{safe_parent}'
             if parent_fk:
                 mermaid_lines.append(parent_fk)
@@ -254,3 +256,93 @@ def visualize_model(request):
         'mermaid_data': mermaid_data,
         'error_message': error_message
     })
+
+def visualize_classdiagram(request):
+    hubs = Hub.objects.all()
+    links = Link.objects.prefetch_related('hubs').all()
+    satellites = Satellite.objects.select_related('content_type').all()
+
+    hub_name_map = {h.id: h.name for h in hubs}
+    link_name_map = {l.id: l.name for l in links}
+
+    mermaid_lines = ['classDiagram']
+    classdefs = [
+        'classDef hub fill:#cfe2ff,stroke:#084298,stroke-width:2px;',
+        'classDef link fill:#fff3cd,stroke:#b45309,stroke-width:2px;',
+        'classDef sat fill:#fff9db,stroke:#b6a100,stroke-width:2px;'
+    ]
+    # Hubs
+    for hub in hubs:
+        safe_name = re.sub(r'\W+', '_', hub.name)
+        mermaid_lines.append(f'class {safe_name} {{')
+        mermaid_lines.append(f'    +HK_{safe_name}')
+        keys = [key.strip() for key in hub.business_keys.split(',') if key.strip()]
+        for i, key in enumerate(keys):
+            safe_key = re.sub(r'\W+', '_', key)
+            mermaid_lines.append(f'    +key_{i+1}_{safe_key}')
+        mermaid_lines.append(f'    +load_date')
+        mermaid_lines.append(f'    +record_source')
+        mermaid_lines.append('}')
+        mermaid_lines.append(f'class {safe_name} hub;')
+    # Links
+    for link in links:
+        safe_name = re.sub(r'\W+', '_', link.name)
+        mermaid_lines.append(f'class {safe_name} {{')
+        for hub in link.hubs.all():
+            safe_hub = re.sub(r'\W+', '_', hub.name)
+            mermaid_lines.append(f'    +HK_{safe_hub}')
+        mermaid_lines.append(f'    +load_date')
+        mermaid_lines.append(f'    +record_source')
+        mermaid_lines.append('}')
+        mermaid_lines.append(f'class {safe_name} link;')
+    # Satellites
+    for satellite in satellites:
+        safe_name = re.sub(r'\W+', '_', satellite.name)
+        mermaid_lines.append(f'class {safe_name} {{')
+        # FK para o pai
+        parent_fk = ''
+        if satellite.content_type.model == 'hub':
+            parent_name = hub_name_map.get(satellite.object_id)
+            if parent_name:
+                safe_parent = re.sub(r'\W+', '_', parent_name)
+                parent_fk = f'HK_{safe_parent}'
+        elif satellite.content_type.model == 'link':
+            parent_name = link_name_map.get(satellite.object_id)
+            if parent_name:
+                safe_parent = re.sub(r'\W+', '_', parent_name)
+                parent_fk = f'HK_{safe_parent}'
+        if parent_fk:
+            mermaid_lines.append(f'    +{parent_fk}')
+        mermaid_lines.append(f'    +HK_DIFF')
+        attributes = [attr.strip() for attr in satellite.attributes.split(',') if attr.strip()]
+        for attr in attributes:
+            if ':' in attr:
+                name, tipo = [a.strip() for a in attr.split(':', 1)]
+            else:
+                name, tipo = attr, 'string'
+            safe_attr = re.sub(r'\W+', '_', name)
+            mermaid_lines.append(f'    +{safe_attr}')
+        mermaid_lines.append(f'    +load_date')
+        mermaid_lines.append(f'    +record_source')
+        mermaid_lines.append('}')
+        mermaid_lines.append(f'class {safe_name} sat;')
+    # classDef antes das associações
+    mermaid_lines += classdefs
+    # Relações
+    for link in links:
+        safe_link = re.sub(r'\W+', '_', link.name)
+        for hub in link.hubs.all():
+            safe_hub = re.sub(r'\W+', '_', hub.name)
+            mermaid_lines.append(f'{safe_hub} --> {safe_link}')
+    for satellite in satellites:
+        safe_sat = re.sub(r'\W+', '_', satellite.name)
+        parent = None
+        if satellite.content_type.model == 'hub':
+            parent = hub_name_map.get(satellite.object_id)
+        elif satellite.content_type.model == 'link':
+            parent = link_name_map.get(satellite.object_id)
+        if parent:
+            safe_parent = re.sub(r'\W+', '_', parent)
+            mermaid_lines.append(f'{safe_parent} --> {safe_sat}')
+    mermaid_data = "\n".join(mermaid_lines)
+    return render(request, 'modeler/visualize_classdiagram.html', {'mermaid_data': mermaid_data})
