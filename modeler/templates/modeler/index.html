@@ -1,0 +1,123 @@
+{% extends "modeler/base.html" %}
+
+{% block title %}Hubs - Data Vault Modeler{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Hubs</h2>
+    <a href="{% url 'create_hub' %}" class="btn btn-primary">Create New Hub</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if hubs %}
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Business Keys</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hub in hubs %}
+                        <tr>
+                            <td>{{ hub.name }}</td>
+                            <td>{{ hub.business_keys }}</td>
+                            <td>{{ hub.description }}</td>
+                            <td>
+                                <a href="{% url 'update_hub' hub.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                <a href="{% url 'delete_hub' hub.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="card-text">Nenhum hub foi criado ainda. Clique em "Create New Hub" para começar.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-5 mb-3">
+    <h2>Links</h2>
+    <a href="{% url 'create_link' %}" class="btn btn-primary">Create New Link</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if links %}
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Connects Hubs</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for link in links %}
+                        <tr>
+                            <td>{{ link.name }}</td>
+                            <td>
+                                {% for hub in link.hubs.all %}
+                                    <span class="badge bg-secondary">{{ hub.name }}</span>
+                                {% endfor %}
+                            </td>
+                            <td>{{ link.description }}</td>
+                            <td>
+                                <a href="{% url 'update_link' link.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                <a href="{% url 'delete_link' link.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="card-text">Nenhum link foi criado ainda. Crie pelo menos dois hubs para começar.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-5 mb-3">
+    <h2>Satellites</h2>
+    <a href="{% url 'create_satellite' %}" class="btn btn-primary">Create New Satellite</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if satellites %}
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Parent</th>
+                        <th>Attributes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sat in satellites %}
+                        <tr>
+                            <td>{{ sat.name }}</td>
+                            <td>
+                                <span class="badge bg-info text-dark">{{ sat.content_type.model|title }}</span>
+                                {{ sat.parent.name }}
+                            </td>
+                            <td>{{ sat.attributes }}</td>
+                            <td>
+                                <a href="{% url 'update_satellite' sat.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                <a href="{% url 'delete_satellite' sat.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="card-text">Nenhum satellite foi criado ainda.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,13 @@
+{% extends "modeler/base.html" %}
+
+{% block title %}Error - Data Vault Modeler{% endblock %}
+
+{% block content %}
+<div class="alert alert-danger" role="alert">
+  <h4 class="alert-heading">Cannot Create Link</h4>
+  <p>You must have at least two Hubs defined before you can create a Link to connect them.</p>
+  <hr>
+  <p class="mb-0">Please <a href="{% url 'create_hub' %}" class="alert-link">create more Hubs</a> first.</p>
+</div>
+<a href="{% url 'index' %}" class="btn btn-secondary mt-3">Back to Home</a>
+{% endblock %} 

@@ -1,0 +1,13 @@
+{% extends "modeler/base.html" %}
+
+{% block title %}Error - Data Vault Modeler{% endblock %}
+
+{% block content %}
+<div class="alert alert-warning" role="alert">
+  <h4 class="alert-heading">Cannot Create Satellite</h4>
+  <p>You must have at least one Hub or Link defined before you can create a Satellite to describe it.</p>
+  <hr>
+  <p class="mb-0">Please <a href="{% url 'create_hub' %}" class="alert-link">create a Hub</a> or a <a href="{% url 'create_link' %}" class="alert-link">Link</a> first.</p>
+</div>
+<a href="{% url 'index' %}" class="btn btn-secondary mt-3">Back to Home</a>
+{% endblock %} 

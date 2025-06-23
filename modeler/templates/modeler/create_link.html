@@ -1,0 +1,37 @@
+{% extends "modeler/base.html" %}
+
+{% block title %}Create Link - Data Vault Modeler{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Create a New Link</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+                        {{ form.name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Hubs to Connect</label>
+                        <div class="form-check" style="max-height: 200px; overflow-y: auto;">
+                            {{ form.hubs }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <a href="{% url 'index' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

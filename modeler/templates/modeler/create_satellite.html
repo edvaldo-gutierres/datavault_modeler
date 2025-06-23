@@ -1,0 +1,80 @@
+{% extends "modeler/base.html" %}
+
+{% block title %}Create Satellite - Data Vault Modeler{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Create a New Satellite</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.parent.id_for_label }}" class="form-label">{{ form.parent.label }}</label>
+                        {{ form.parent }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+                        {{ form.name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Atributos do Satellite</label>
+                        <div id="attributes-formset">
+                            {{ formset.management_form }}
+                            {% for form in formset %}
+                                <div class="row mb-2 attribute-form">
+                                    <div class="col-md-6">{{ form.name.label_tag }}{{ form.name }}</div>
+                                    <div class="col-md-4">{{ form.tipo.label_tag }}{{ form.tipo }}</div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="button" class="btn btn-danger btn-remove-attribute">Remover</button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-primary" id="add-attribute">Adicionar atributo</button>
+                    </div>
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <a href="{% url 'index' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function updateFormIndices() {
+            const forms = document.querySelectorAll('.attribute-form');
+            document.getElementById('id_attributes-TOTAL_FORMS').value = forms.length;
+            forms.forEach(function(form, i) {
+                form.querySelectorAll('input, select, label').forEach(function(el) {
+                    if (el.name) el.name = el.name.replace(/attributes-\d+-/, 'attributes-' + i + '-');
+                    if (el.id) el.id = el.id.replace(/attributes-\d+-/, 'attributes-' + i + '-');
+                    if (el.htmlFor) el.htmlFor = el.htmlFor.replace(/attributes-\d+-/, 'attributes-' + i + '-');
+                });
+            });
+        }
+        document.getElementById('add-attribute').onclick = function() {
+            const formsetDiv = document.getElementById('attributes-formset');
+            const forms = formsetDiv.querySelectorAll('.attribute-form');
+            const newForm = forms[0].cloneNode(true);
+            newForm.querySelectorAll('input').forEach(function(input) { input.value = ''; });
+            newForm.querySelectorAll('select').forEach(function(select) { select.selectedIndex = 0; });
+            formsetDiv.appendChild(newForm);
+            updateFormIndices();
+        };
+        document.getElementById('attributes-formset').addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-remove-attribute')) {
+                const forms = document.querySelectorAll('.attribute-form');
+                if (forms.length > 1) {
+                    e.target.closest('.attribute-form').remove();
+                    updateFormIndices();
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 
