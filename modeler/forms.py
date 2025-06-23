@@ -76,6 +76,10 @@ class SatelliteForm(forms.ModelForm):
             'load_date': forms.TextInput(attrs={'class': 'form-control'}),
             'record_source': forms.TextInput(attrs={'class': 'form-control'})
         }
+        labels = {
+            'load_date': 'Data de Carga',
+            'record_source': 'Fonte do Registro'
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
