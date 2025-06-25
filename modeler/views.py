@@ -286,8 +286,6 @@ def visualize(request):
             mermaid_lines.append(f'        string {hub.business_key}')
             mermaid_lines.append(f'        datetime load_date')
             mermaid_lines.append(f'        string record_source')
-            mermaid_lines.append(f'        datetime created_at')
-            mermaid_lines.append(f'        datetime updated_at')
             mermaid_lines.append('    }')
 
         # Adiciona as entidades Link
@@ -300,8 +298,6 @@ def visualize(request):
                 mermaid_lines.append(f'        string HK_{safe_hub}')
             mermaid_lines.append(f'        datetime load_date')
             mermaid_lines.append(f'        string record_source')
-            mermaid_lines.append(f'        datetime created_at')
-            mermaid_lines.append(f'        datetime updated_at')
             mermaid_lines.append('    }')
         
         # Adiciona as entidades Satellite
@@ -337,8 +333,6 @@ def visualize(request):
             # Adiciona os campos de auditoria
             mermaid_lines.append(f'        datetime load_date')
             mermaid_lines.append(f'        string record_source')
-            mermaid_lines.append(f'        datetime created_at')
-            mermaid_lines.append(f'        datetime updated_at')
             mermaid_lines.append('    }')
 
         # Adiciona as relações
@@ -407,8 +401,6 @@ def visualize_classdiagram(request):
             mermaid_lines.append(f'    +{hub.business_key}')
             mermaid_lines.append(f'    +load_date')
             mermaid_lines.append(f'    +record_source')
-            mermaid_lines.append(f'    +created_at')
-            mermaid_lines.append(f'    +updated_at')
             mermaid_lines.append('}')
             mermaid_lines.append(f'class H_{safe_name} hubStyle')
 
@@ -422,8 +414,6 @@ def visualize_classdiagram(request):
                 mermaid_lines.append(f'    +HK_{safe_hub}')
             mermaid_lines.append(f'    +load_date')
             mermaid_lines.append(f'    +record_source')
-            mermaid_lines.append(f'    +created_at')
-            mermaid_lines.append(f'    +updated_at')
             mermaid_lines.append('}')
             mermaid_lines.append(f'class L_{safe_name} linkStyle')
 
@@ -460,8 +450,6 @@ def visualize_classdiagram(request):
             # Adiciona os campos de auditoria
             mermaid_lines.append(f'    +load_date')
             mermaid_lines.append(f'    +record_source')
-            mermaid_lines.append(f'    +created_at')
-            mermaid_lines.append(f'    +updated_at')
             mermaid_lines.append('}')
             mermaid_lines.append(f'class S_{safe_name} satelliteStyle')
 
