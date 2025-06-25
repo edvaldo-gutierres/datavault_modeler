@@ -27,6 +27,7 @@ def index(request):
     })
 
 def create_hub(request, project_pk):
+    """Cria um novo Hub."""
     project = get_object_or_404(Project, pk=project_pk)
     
     if request.method == 'POST':
@@ -37,7 +38,10 @@ def create_hub(request, project_pk):
     else:
         form = HubForm(initial={'project': project.pk})
     
-    return render(request, 'modeler/create_hub.html', {'form': form})
+    return render(request, 'modeler/create_hub.html', {
+        'form': form,
+        'project': project
+    })
 
 def update_hub(request, pk):
     hub = get_object_or_404(Hub, pk=pk)
@@ -79,6 +83,7 @@ def delete_hub(request, pk):
     return render(request, 'modeler/hub_confirm_delete.html', context)
 
 def create_link(request, project_pk):
+    """Cria um novo Link."""
     project = get_object_or_404(Project, pk=project_pk)
     
     if request.method == 'POST':
@@ -90,11 +95,15 @@ def create_link(request, project_pk):
         form = LinkForm(initial={'project': project.pk})
     
     if Hub.objects.filter(project=project).count() < 2:
-        return render(request, 'modeler/error_not_enough_hubs.html')
+        return render(request, 'modeler/error_not_enough_hubs.html', {'project': project})
 
-    return render(request, 'modeler/create_link.html', {'form': form})
+    return render(request, 'modeler/create_link.html', {
+        'form': form,
+        'project': project
+    })
 
 def create_satellite(request, project_pk):
+    """Cria um novo Satellite."""
     project = get_object_or_404(Project, pk=project_pk)
     
     if request.method == 'POST':
@@ -130,11 +139,12 @@ def create_satellite(request, project_pk):
         formset = AttributeFormSet(prefix='attributes')
 
     if not form.fields['parent'].choices:
-        return render(request, 'modeler/error_no_parents.html')
+        return render(request, 'modeler/error_no_parents.html', {'project': project})
 
     return render(request, 'modeler/create_satellite.html', {
-        'form': form, 
-        'formset': formset
+        'form': form,
+        'formset': formset,
+        'project': project
     })
 
 def update_satellite(request, pk):

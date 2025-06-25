@@ -3,29 +3,20 @@
 {% block title %}Erro - Data Vault Modeler{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <div class="card border-warning shadow-sm">
-                <div class="card-header bg-warning text-dark py-3">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <h3 class="card-title h5 mb-0">Não é possível criar Link</h3>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <p class="mb-4">Você precisa ter pelo menos dois Hubs definidos antes de criar um Link para conectá-los.</p>
-                    <div class="d-flex gap-2">
-                        <a href="{% url 'create_hub' %}?project={{ request.GET.project }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i>Criar Hub
-                        </a>
-                        <a href="{% url 'project_detail' request.GET.project %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-1"></i>Voltar
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="container mt-4">
+    <div class="alert alert-warning" role="alert">
+        <h4 class="alert-heading">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Não é possível criar um Link
+        </h4>
+        <p>É necessário ter pelo menos 2 Hubs criados antes de criar um Link.</p>
+        <hr>
+        <p class="mb-0">
+            <a href="{% url 'project_detail' project.pk %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Voltar para o Projeto
+            </a>
+        </p>
     </div>
 </div>
 {% endblock %} 

@@ -8,7 +8,7 @@
         <div class="col-lg-8 mx-auto">
             <!-- Botão Voltar -->
             <div class="mb-3">
-                <a href="{% url 'project_detail' request.GET.project %}" class="btn btn-outline-secondary">
+                <a href="{% url 'project_detail' project.pk %}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-1"></i>Voltar para o Projeto
                 </a>
             </div>
@@ -20,7 +20,7 @@
                             <i class="fas fa-link text-warning me-2"></i>
                             <h3 class="card-title h5 mb-0">Criar Novo Link</h3>
                         </div>
-                        <a href="{% url 'project_detail' request.GET.project %}" class="btn btn-sm btn-outline-secondary">
+                        <a href="{% url 'project_detail' project.pk %}" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-times me-1"></i>Fechar
                         </a>
                     </div>
@@ -103,7 +103,7 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-1"></i>Salvar Link
                             </button>
-                            <a href="{% url 'project_detail' request.GET.project %}" class="btn btn-outline-secondary">
+                            <a href="{% url 'project_detail' project.pk %}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-1"></i>Cancelar
                             </a>
                         </div>
