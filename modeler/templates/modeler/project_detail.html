@@ -39,13 +39,13 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Modelo Data Vault</h5>
                     <div class="btn-group">
-                        <a href="{% url 'create_hub' %}?project={{ project.pk }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{% url 'create_hub' project_pk=project.pk %}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-plus"></i> Hub
                         </a>
-                        <a href="{% url 'create_link' %}?project={{ project.pk }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{% url 'create_link' project_pk=project.pk %}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-plus"></i> Link
                         </a>
-                        <a href="{% url 'create_satellite' %}?project={{ project.pk }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{% url 'create_satellite' project_pk=project.pk %}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-plus"></i> Satellite
                         </a>
                     </div>
@@ -129,8 +129,11 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <a href="{% url 'visualize' %}?project={{ project.pk }}" class="btn btn-primary">
+                    <a href="{% url 'visualize' project.pk %}" class="btn btn-primary">
                         <i class="fas fa-project-diagram"></i> Visualizar Diagrama
+                    </a>
+                    <a href="{% url 'view_ddl' project.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-code"></i> Visualizar DDL SQL
                     </a>
                 </div>
             </div>

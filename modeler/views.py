@@ -26,12 +26,8 @@ def index(request):
         "satellites": satellites
     })
 
-def create_hub(request):
-    project_id = request.GET.get('project')
-    if not project_id:
-        return redirect('project_list')
-    
-    project = get_object_or_404(Project, pk=project_id)
+def create_hub(request, project_pk):
+    project = get_object_or_404(Project, pk=project_pk)
     
     if request.method == 'POST':
         form = HubForm(request.POST)
@@ -82,12 +78,8 @@ def delete_hub(request, pk):
     }
     return render(request, 'modeler/hub_confirm_delete.html', context)
 
-def create_link(request):
-    project_id = request.GET.get('project')
-    if not project_id:
-        return redirect('project_list')
-    
-    project = get_object_or_404(Project, pk=project_id)
+def create_link(request, project_pk):
+    project = get_object_or_404(Project, pk=project_pk)
     
     if request.method == 'POST':
         form = LinkForm(request.POST)
@@ -102,12 +94,8 @@ def create_link(request):
 
     return render(request, 'modeler/create_link.html', {'form': form})
 
-def create_satellite(request):
-    project_id = request.GET.get('project')
-    if not project_id:
-        return redirect('project_list')
-    
-    project = get_object_or_404(Project, pk=project_id)
+def create_satellite(request, project_pk):
+    project = get_object_or_404(Project, pk=project_pk)
     
     if request.method == 'POST':
         form = SatelliteForm(request.POST, initial={'project': project.pk})
@@ -254,234 +242,106 @@ def delete_link(request, pk):
     }
     return render(request, 'modeler/link_confirm_delete.html', context)
 
-def visualize(request):
-    try:
-        project_id = request.GET.get('project')
-        if not project_id:
-            return redirect('project_list')
+def visualize_legacy(request):
+    """Função de compatibilidade para redirecionar a URL antiga para a nova."""
+    project_id = request.GET.get('project')
+    if project_id:
+        return redirect('visualize', pk=project_id)
+    return redirect('project_list')
+
+def visualize(request, pk):
+    """Visualiza o modelo Data Vault usando Mermaid."""
+    project = get_object_or_404(Project, pk=pk)
+    hubs = Hub.objects.filter(project=project)
+    links = Link.objects.filter(project=project).prefetch_related('hubs')
+    satellites = Satellite.objects.filter(project=project).select_related('content_type')
+    
+    # Cria dicionários para mapear IDs para nomes
+    hub_name_map = {str(hub.id): hub.name for hub in hubs}
+    link_name_map = {str(link.id): link.name for link in links}
+    
+    mermaid_lines = []
+    mermaid_lines.append('erDiagram')
+    
+    # Adiciona as definições de estilo
+    mermaid_lines.extend([
+        '%% Style Definitions',
+        'classDef hubStyle fill:#1a1a1a,stroke:#60a5fa,stroke-width:2px,color:#60a5fa',
+        'classDef linkStyle fill:#1a1a1a,stroke:#fb923c,stroke-width:2px,color:#fb923c',
+        'classDef satelliteStyle fill:#1a1a1a,stroke:#facc15,stroke-width:2px,color:#facc15'
+    ])
+    
+    # Adiciona as entidades Hub
+    for hub in hubs:
+        safe_name = re.sub(r'\W+', '_', hub.name)
+        mermaid_lines.append(f'    H_{safe_name}:::hubStyle {{')
+        mermaid_lines.append(f'        string HK_{safe_name}')
+        mermaid_lines.append(f'        string {hub.business_key}')
+        mermaid_lines.append(f'        datetime load_date')
+        mermaid_lines.append(f'        string record_source')
+        mermaid_lines.append('    }')
+    
+    # Adiciona as entidades Link
+    for link in links:
+        safe_name = re.sub(r'\W+', '_', link.name)
+        mermaid_lines.append(f'    L_{safe_name}:::linkStyle {{')
+        mermaid_lines.append(f'        string HK_{safe_name}')
+        for hub in link.hubs.all():
+            safe_hub = re.sub(r'\W+', '_', hub.name)
+            mermaid_lines.append(f'        string HK_{safe_hub}')
+        mermaid_lines.append(f'        datetime load_date')
+        mermaid_lines.append(f'        string record_source')
+        mermaid_lines.append('    }')
         
-        project = get_object_or_404(Project, pk=project_id)
-        hubs = Hub.objects.filter(project=project)
-        links = Link.objects.filter(project=project).prefetch_related('hubs')
-        satellites = Satellite.objects.filter(project=project).select_related('content_type')
-
-        hub_name_map = {h.id: h.name for h in hubs}
-        link_name_map = {l.id: l.name for l in links}
-
-        mermaid_lines = ['erDiagram']
+        # Adiciona os relacionamentos do Link com os Hubs
+        for hub in link.hubs.all():
+            safe_hub = re.sub(r'\W+', '_', hub.name)
+            mermaid_lines.append(f'    L_{safe_name} }}|--|| H_{safe_hub} : "references"')
+    
+    # Adiciona as entidades Satellite
+    for satellite in satellites:
+        safe_name = re.sub(r'\W+', '_', satellite.name)
+        mermaid_lines.append(f'    S_{safe_name}:::satelliteStyle {{')
         
-        # Adiciona as definições de estilo
-        mermaid_lines.extend([
-            '%% Style Definitions',
-            'classDef hubStyle fill:#1a1a1a,stroke:#60a5fa,stroke-width:2px,color:#60a5fa',
-            'classDef linkStyle fill:#1a1a1a,stroke:#fb923c,stroke-width:2px,color:#fb923c',
-            'classDef satelliteStyle fill:#1a1a1a,stroke:#facc15,stroke-width:2px,color:#facc15'
-        ])
-
-        # Adiciona as entidades Hub
-        for hub in hubs:
-            safe_name = re.sub(r'\W+', '_', hub.name)
-            mermaid_lines.append(f'    H_{safe_name}:::hubStyle {{')
-            mermaid_lines.append(f'        string HK_{safe_name}')
-            mermaid_lines.append(f'        string {hub.business_key}')
-            mermaid_lines.append(f'        datetime load_date')
-            mermaid_lines.append(f'        string record_source')
-            mermaid_lines.append('    }')
-
-        # Adiciona as entidades Link
-        for link in links:
-            safe_name = re.sub(r'\W+', '_', link.name)
-            mermaid_lines.append(f'    L_{safe_name}:::linkStyle {{')
-            mermaid_lines.append(f'        string HK_{safe_name}')
-            for hub in link.hubs.all():
-                safe_hub = re.sub(r'\W+', '_', hub.name)
-                mermaid_lines.append(f'        string HK_{safe_hub}')
-            mermaid_lines.append(f'        datetime load_date')
-            mermaid_lines.append(f'        string record_source')
-            mermaid_lines.append('    }')
+        # Adiciona a chave do pai (Hub ou Link)
+        parent_name = None
+        if satellite.content_type.model == 'hub':
+            parent = Hub.objects.get(id=satellite.object_id)
+            parent_name = parent.name
+            safe_parent = re.sub(r'\W+', '_', parent_name)
+            mermaid_lines.append(f'        string HK_{safe_parent}')
+        elif satellite.content_type.model == 'link':
+            parent = Link.objects.get(id=satellite.object_id)
+            parent_name = parent.name
+            safe_parent = re.sub(r'\W+', '_', parent_name)
+            mermaid_lines.append(f'        string HK_{safe_parent}')
         
-        # Adiciona as entidades Satellite
-        for satellite in satellites:
-            safe_name = re.sub(r'\W+', '_', satellite.name)
-            mermaid_lines.append(f'    S_{safe_name}:::satelliteStyle {{')
-            # FK para o pai
-            parent_fk = None
-            if satellite.content_type.model == 'hub':
-                parent_name = hub_name_map.get(satellite.object_id)
-                if parent_name:
-                    safe_parent = re.sub(r'\W+', '_', parent_name)
-                    parent_fk = f'        string HK_{safe_parent}'
-            elif satellite.content_type.model == 'link':
-                parent_name = link_name_map.get(satellite.object_id)
-                if parent_name:
-                    safe_parent = re.sub(r'\W+', '_', parent_name)
-                    parent_fk = f'        string HK_{safe_parent}'
-            if parent_fk:
-                mermaid_lines.append(parent_fk)
-            
-            # Adiciona o HK_DIFF e campos default
-            mermaid_lines.append(f'        string HK_DIFF')
-            mermaid_lines.append(f'        datetime valid_from')
-            mermaid_lines.append(f'        datetime valid_to')
-            mermaid_lines.append(f'        boolean is_current')
-            
-            # Adiciona os atributos específicos
-            for name, tipo in satellite.attributes.items():
-                safe_name = name.replace(' ', '_')
-                mermaid_lines.append(f'        {tipo} {safe_name} "{name}"')
-            
-            # Adiciona os campos de auditoria
-            mermaid_lines.append(f'        datetime load_date')
-            mermaid_lines.append(f'        string record_source')
-            mermaid_lines.append('    }')
-
-        # Adiciona as relações
-        for link in links:
-            safe_link = re.sub(r'\W+', '_', link.name)
-            for hub in link.hubs.all():
-                safe_hub = re.sub(r'\W+', '_', hub.name)
-                mermaid_lines.append(f'    H_{safe_hub} ||--|{{ L_{safe_link} : "connects"')
-
-        for satellite in satellites:
-            safe_sat = re.sub(r'\W+', '_', satellite.name)
-            parent = None
-            if satellite.content_type.model == 'hub':
-                parent = hub_name_map.get(satellite.object_id)
-            elif satellite.content_type.model == 'link':
-                parent = link_name_map.get(satellite.object_id)
-            if parent:
-                safe_parent = re.sub(r'\W+', '_', parent)
-                if satellite.content_type.model == 'hub':
-                    mermaid_lines.append(f'    H_{safe_parent} ||--o{{ S_{safe_sat} : "describes"')
-                else:
-                    mermaid_lines.append(f'    L_{safe_parent} ||--o{{ S_{safe_sat} : "describes"')
-
-        mermaid_data = "\n".join(mermaid_lines)
-        error_message = None
-    except Exception as e:
-        mermaid_data = ''
-        error_message = f"Ocorreu um erro ao gerar o diagrama: {e}"
-        project = None
-
+        # Adiciona o HK_DIFF e campos default
+        mermaid_lines.append(f'        string HK_DIFF')
+        mermaid_lines.append(f'        datetime valid_from')
+        mermaid_lines.append(f'        datetime valid_to')
+        mermaid_lines.append(f'        boolean is_current')
+        
+        # Adiciona os atributos específicos
+        for name, tipo in satellite.attributes.items():
+            safe_attr = re.sub(r'\W+', '_', name)
+            mermaid_lines.append(f'        {tipo} {safe_attr} "{name}"')
+        
+        # Adiciona os campos de auditoria
+        mermaid_lines.append(f'        datetime load_date')
+        mermaid_lines.append(f'        string record_source')
+        mermaid_lines.append('    }')
+        
+        # Adiciona o relacionamento do Satellite com seu pai
+        if parent_name:
+            safe_parent = re.sub(r'\W+', '_', parent_name)
+            prefix = 'H_' if satellite.content_type.model == 'hub' else 'L_'
+            mermaid_lines.append(f'    S_{safe_name} }}|--|| {prefix}{safe_parent} : "describes"')
+    
+    mermaid_data = "\n".join(mermaid_lines)
+    error_message = None
+    
     return render(request, 'modeler/visualize.html', {
-        'mermaid_data': mermaid_data,
-        'error_message': error_message,
-        'project': project
-    })
-
-def visualize_classdiagram(request):
-    try:
-        project_id = request.GET.get('project')
-        if not project_id:
-            return redirect('project_list')
-        
-        project = get_object_or_404(Project, pk=project_id)
-        hubs = Hub.objects.filter(project=project)
-        links = Link.objects.filter(project=project).prefetch_related('hubs')
-        satellites = Satellite.objects.filter(project=project).select_related('content_type')
-
-        hub_name_map = {h.id: h.name for h in hubs}
-        link_name_map = {l.id: l.name for l in links}
-
-        mermaid_lines = ['classDiagram']
-        
-        # Adiciona as definições de estilo
-        mermaid_lines.extend([
-            '%% Style Definitions',
-            'classDef hubStyle fill:#1a1a1a,stroke:#60a5fa,stroke-width:2px,color:#60a5fa',
-            'classDef linkStyle fill:#1a1a1a,stroke:#fb923c,stroke-width:2px,color:#fb923c',
-            'classDef satelliteStyle fill:#1a1a1a,stroke:#facc15,stroke-width:2px,color:#facc15'
-        ])
-
-        # Hubs
-        for hub in hubs:
-            safe_name = re.sub(r'\W+', '_', hub.name)
-            mermaid_lines.append(f'class H_{safe_name} {{')
-            mermaid_lines.append(f'    +HK_{safe_name}')
-            mermaid_lines.append(f'    +{hub.business_key}')
-            mermaid_lines.append(f'    +load_date')
-            mermaid_lines.append(f'    +record_source')
-            mermaid_lines.append('}')
-            mermaid_lines.append(f'class H_{safe_name} hubStyle')
-
-        # Links
-        for link in links:
-            safe_name = re.sub(r'\W+', '_', link.name)
-            mermaid_lines.append(f'class L_{safe_name} {{')
-            mermaid_lines.append(f'    +HK_{safe_name}')
-            for hub in link.hubs.all():
-                safe_hub = re.sub(r'\W+', '_', hub.name)
-                mermaid_lines.append(f'    +HK_{safe_hub}')
-            mermaid_lines.append(f'    +load_date')
-            mermaid_lines.append(f'    +record_source')
-            mermaid_lines.append('}')
-            mermaid_lines.append(f'class L_{safe_name} linkStyle')
-
-        # Satellites
-        for satellite in satellites:
-            safe_name = re.sub(r'\W+', '_', satellite.name)
-            mermaid_lines.append(f'class S_{safe_name} {{')
-            # FK para o pai
-            parent_fk = ''
-            if satellite.content_type.model == 'hub':
-                parent_name = hub_name_map.get(satellite.object_id)
-                if parent_name:
-                    safe_parent = re.sub(r'\W+', '_', parent_name)
-                    parent_fk = f'HK_{safe_parent}'
-            elif satellite.content_type.model == 'link':
-                parent_name = link_name_map.get(satellite.object_id)
-                if parent_name:
-                    safe_parent = re.sub(r'\W+', '_', parent_name)
-                    parent_fk = f'HK_{safe_parent}'
-            if parent_fk:
-                mermaid_lines.append(f'    +{parent_fk}')
-            
-            # Adiciona o HK_DIFF e campos default
-            mermaid_lines.append(f'    +HK_DIFF')
-            mermaid_lines.append(f'    +valid_from')
-            mermaid_lines.append(f'    +valid_to')
-            mermaid_lines.append(f'    +is_current')
-            
-            # Adiciona os atributos específicos
-            for name, tipo in satellite.attributes.items():
-                safe_attr = re.sub(r'\W+', '_', name)
-                mermaid_lines.append(f'    +{safe_attr}')
-            
-            # Adiciona os campos de auditoria
-            mermaid_lines.append(f'    +load_date')
-            mermaid_lines.append(f'    +record_source')
-            mermaid_lines.append('}')
-            mermaid_lines.append(f'class S_{safe_name} satelliteStyle')
-
-        # Relações
-        for link in links:
-            safe_link = re.sub(r'\W+', '_', link.name)
-            for hub in link.hubs.all():
-                safe_hub = re.sub(r'\W+', '_', hub.name)
-                mermaid_lines.append(f'H_{safe_hub} --> L_{safe_link}')
-
-        for satellite in satellites:
-            safe_sat = re.sub(r'\W+', '_', satellite.name)
-            parent = None
-            if satellite.content_type.model == 'hub':
-                parent = hub_name_map.get(satellite.object_id)
-            elif satellite.content_type.model == 'link':
-                parent = link_name_map.get(satellite.object_id)
-            if parent:
-                safe_parent = re.sub(r'\W+', '_', parent)
-                if satellite.content_type.model == 'hub':
-                    mermaid_lines.append(f'H_{safe_parent} --> S_{safe_sat}')
-                else:
-                    mermaid_lines.append(f'L_{safe_parent} --> S_{safe_sat}')
-
-        mermaid_data = "\n".join(mermaid_lines)
-        error_message = None
-    except Exception as e:
-        mermaid_data = ''
-        error_message = f"Ocorreu um erro ao gerar o diagrama: {e}"
-        project = None
-
-    return render(request, 'modeler/visualize_classdiagram.html', {
         'mermaid_data': mermaid_data,
         'error_message': error_message,
         'project': project
@@ -518,3 +378,183 @@ def project_detail(request, pk):
         'satellites': project.satellites.all()
     }
     return render(request, 'modeler/project_detail.html', context)
+
+def view_ddl(request, pk):
+    """Visualiza o DDL SQL na página."""
+    project = get_object_or_404(Project, pk=pk)
+    hubs = Hub.objects.filter(project=project)
+    links = Link.objects.filter(project=project)
+    satellites = Satellite.objects.filter(project=project)
+    
+    # Mapeamento de tipos Python para SQL
+    type_mapping = {
+        'string': 'VARCHAR(255)',
+        'integer': 'INTEGER',
+        'float': 'DECIMAL(18,2)',
+        'boolean': 'BOOLEAN',
+        'datetime': 'TIMESTAMP',
+        'date': 'DATE'
+    }
+    
+    ddl_lines = []
+    ddl_lines.append(f'-- DDL gerado automaticamente para o projeto: {project.name}')
+    ddl_lines.append('\n-- Criação dos Hubs')
+    
+    # Gera DDL para Hubs
+    for hub in hubs:
+        safe_name = re.sub(r'\W+', '_', hub.name)
+        ddl_lines.append(f'\nCREATE TABLE H_{safe_name} (')
+        ddl_lines.append(f'    HK_{safe_name} VARCHAR(32) PRIMARY KEY,')
+        ddl_lines.append(f'    {hub.business_key} VARCHAR(255) NOT NULL,')
+        ddl_lines.append('    load_date TIMESTAMP NOT NULL,')
+        ddl_lines.append('    record_source VARCHAR(255) NOT NULL')
+        ddl_lines.append(');')
+    
+    # Gera DDL para Links
+    ddl_lines.append('\n-- Criação dos Links')
+    for link in links:
+        safe_name = re.sub(r'\W+', '_', link.name)
+        ddl_lines.append(f'\nCREATE TABLE L_{safe_name} (')
+        ddl_lines.append(f'    HK_{safe_name} VARCHAR(32) PRIMARY KEY,')
+        
+        # Adiciona as chaves dos Hubs relacionados
+        for hub in link.hubs.all():
+            safe_hub = re.sub(r'\W+', '_', hub.name)
+            ddl_lines.append(f'    HK_{safe_hub} VARCHAR(32) NOT NULL,')
+            ddl_lines.append(f'    FOREIGN KEY (HK_{safe_hub}) REFERENCES H_{safe_hub}(HK_{safe_hub}),')
+        
+        ddl_lines.append('    load_date TIMESTAMP NOT NULL,')
+        ddl_lines.append('    record_source VARCHAR(255) NOT NULL')
+        ddl_lines.append(');')
+    
+    # Gera DDL para Satellites
+    ddl_lines.append('\n-- Criação dos Satellites')
+    for satellite in satellites:
+        safe_name = re.sub(r'\W+', '_', satellite.name)
+        ddl_lines.append(f'\nCREATE TABLE S_{safe_name} (')
+        
+        # Adiciona a chave do pai (Hub ou Link)
+        parent_fk = None
+        if satellite.content_type.model == 'hub':
+            parent_name = Hub.objects.get(id=satellite.object_id).name
+            safe_parent = re.sub(r'\W+', '_', parent_name)
+            ddl_lines.append(f'    HK_{safe_parent} VARCHAR(32) NOT NULL,')
+            ddl_lines.append(f'    FOREIGN KEY (HK_{safe_parent}) REFERENCES H_{safe_parent}(HK_{safe_parent}),')
+        elif satellite.content_type.model == 'link':
+            parent_name = Link.objects.get(id=satellite.object_id).name
+            safe_parent = re.sub(r'\W+', '_', parent_name)
+            ddl_lines.append(f'    HK_{safe_parent} VARCHAR(32) NOT NULL,')
+            ddl_lines.append(f'    FOREIGN KEY (HK_{safe_parent}) REFERENCES L_{safe_parent}(HK_{safe_parent}),')
+        
+        # Adiciona o HK_DIFF e campos default
+        ddl_lines.append('    HK_DIFF VARCHAR(32) NOT NULL,')
+        ddl_lines.append('    valid_from TIMESTAMP NOT NULL,')
+        ddl_lines.append('    valid_to TIMESTAMP,')
+        ddl_lines.append('    is_current BOOLEAN NOT NULL,')
+        
+        # Adiciona os atributos específicos
+        for name, tipo in satellite.attributes.items():
+            safe_attr = re.sub(r'\W+', '_', name)
+            sql_type = type_mapping.get(tipo.lower(), 'VARCHAR(255)')
+            ddl_lines.append(f'    {safe_attr} {sql_type},')
+        
+        # Adiciona os campos de auditoria
+        ddl_lines.append('    load_date TIMESTAMP NOT NULL,')
+        ddl_lines.append('    record_source VARCHAR(255) NOT NULL,')
+        ddl_lines.append('    PRIMARY KEY (HK_DIFF)')
+        ddl_lines.append(');')
+    
+    return render(request, 'modeler/view_ddl.html', {
+        'project': project,
+        'ddl_content': '\n'.join(ddl_lines)
+    })
+
+def generate_ddl(request, pk):
+    """Gera o DDL SQL para download."""
+    project = get_object_or_404(Project, pk=pk)
+    hubs = Hub.objects.filter(project=project)
+    links = Link.objects.filter(project=project)
+    satellites = Satellite.objects.filter(project=project)
+    
+    # Mapeamento de tipos Python para SQL
+    type_mapping = {
+        'string': 'VARCHAR(255)',
+        'integer': 'INTEGER',
+        'float': 'DECIMAL(18,2)',
+        'boolean': 'BOOLEAN',
+        'datetime': 'TIMESTAMP',
+        'date': 'DATE'
+    }
+    
+    ddl_lines = []
+    ddl_lines.append(f'-- DDL gerado automaticamente para o projeto: {project.name}')
+    ddl_lines.append('\n-- Criação dos Hubs')
+    
+    # Gera DDL para Hubs
+    for hub in hubs:
+        safe_name = re.sub(r'\W+', '_', hub.name)
+        ddl_lines.append(f'\nCREATE TABLE H_{safe_name} (')
+        ddl_lines.append(f'    HK_{safe_name} VARCHAR(32) PRIMARY KEY,')
+        ddl_lines.append(f'    {hub.business_key} VARCHAR(255) NOT NULL,')
+        ddl_lines.append('    load_date TIMESTAMP NOT NULL,')
+        ddl_lines.append('    record_source VARCHAR(255) NOT NULL')
+        ddl_lines.append(');')
+    
+    # Gera DDL para Links
+    ddl_lines.append('\n-- Criação dos Links')
+    for link in links:
+        safe_name = re.sub(r'\W+', '_', link.name)
+        ddl_lines.append(f'\nCREATE TABLE L_{safe_name} (')
+        ddl_lines.append(f'    HK_{safe_name} VARCHAR(32) PRIMARY KEY,')
+        
+        # Adiciona as chaves dos Hubs relacionados
+        for hub in link.hubs.all():
+            safe_hub = re.sub(r'\W+', '_', hub.name)
+            ddl_lines.append(f'    HK_{safe_hub} VARCHAR(32) NOT NULL,')
+            ddl_lines.append(f'    FOREIGN KEY (HK_{safe_hub}) REFERENCES H_{safe_hub}(HK_{safe_hub}),')
+        
+        ddl_lines.append('    load_date TIMESTAMP NOT NULL,')
+        ddl_lines.append('    record_source VARCHAR(255) NOT NULL')
+        ddl_lines.append(');')
+    
+    # Gera DDL para Satellites
+    ddl_lines.append('\n-- Criação dos Satellites')
+    for satellite in satellites:
+        safe_name = re.sub(r'\W+', '_', satellite.name)
+        ddl_lines.append(f'\nCREATE TABLE S_{safe_name} (')
+        
+        # Adiciona a chave do pai (Hub ou Link)
+        parent_fk = None
+        if satellite.content_type.model == 'hub':
+            parent_name = Hub.objects.get(id=satellite.object_id).name
+            safe_parent = re.sub(r'\W+', '_', parent_name)
+            ddl_lines.append(f'    HK_{safe_parent} VARCHAR(32) NOT NULL,')
+            ddl_lines.append(f'    FOREIGN KEY (HK_{safe_parent}) REFERENCES H_{safe_parent}(HK_{safe_parent}),')
+        elif satellite.content_type.model == 'link':
+            parent_name = Link.objects.get(id=satellite.object_id).name
+            safe_parent = re.sub(r'\W+', '_', parent_name)
+            ddl_lines.append(f'    HK_{safe_parent} VARCHAR(32) NOT NULL,')
+            ddl_lines.append(f'    FOREIGN KEY (HK_{safe_parent}) REFERENCES L_{safe_parent}(HK_{safe_parent}),')
+        
+        # Adiciona o HK_DIFF e campos default
+        ddl_lines.append('    HK_DIFF VARCHAR(32) NOT NULL,')
+        ddl_lines.append('    valid_from TIMESTAMP NOT NULL,')
+        ddl_lines.append('    valid_to TIMESTAMP,')
+        ddl_lines.append('    is_current BOOLEAN NOT NULL,')
+        
+        # Adiciona os atributos específicos
+        for name, tipo in satellite.attributes.items():
+            safe_attr = re.sub(r'\W+', '_', name)
+            sql_type = type_mapping.get(tipo.lower(), 'VARCHAR(255)')
+            ddl_lines.append(f'    {safe_attr} {sql_type},')
+        
+        # Adiciona os campos de auditoria
+        ddl_lines.append('    load_date TIMESTAMP NOT NULL,')
+        ddl_lines.append('    record_source VARCHAR(255) NOT NULL,')
+        ddl_lines.append('    PRIMARY KEY (HK_DIFF)')
+        ddl_lines.append(');')
+    
+    # Retorna o DDL como texto com encoding UTF-8
+    response = HttpResponse('\n'.join(ddl_lines), content_type='text/plain; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="{project.name}_ddl.sql"'
+    return response
