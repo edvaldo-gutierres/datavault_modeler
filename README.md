@@ -2,6 +2,10 @@
 
 Este é um aplicativo web Django projetado para modelar e visualizar estruturas de Data Vault 2.0. Ele permite que os usuários criem e gerenciem Hubs, Links e Satellites e, em seguida, visualizem o modelo resultante como um Diagrama de Entidade-Relacionamento (ERD).
 
+## 📄 Licença
+
+Este projeto está licenciado sob uma **Licença Educacional** que permite apenas uso para fins de estudo e aprendizado. **Uso comercial é estritamente proibido**. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
 ## Funcionalidades
 
 - **Criar Hubs:** Defina as entidades de negócio centrais com suas chaves de negócio.
