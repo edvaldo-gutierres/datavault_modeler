@@ -7,6 +7,13 @@
 # Arquivos de configuração locais
 .env
 *.env
+.env.local
+.env.production
+.env.staging
+
+# Arquivos de configuração com dados sensíveis
+config.py
+secrets.py
 
 # Pycache e arquivos temporários
 __pycache__/

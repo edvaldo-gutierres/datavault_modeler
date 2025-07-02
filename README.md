@@ -25,31 +25,38 @@ Siga estas instruções para configurar e executar o ambiente de desenvolvimento
 
 ### Instruções de Instalação
 
-1.  **Clone o repositório (se aplicável):**
+1.  **Clone o repositório:**
     ```bash
     git clone <URL_DO_REPOSITORIO>
     cd datavault_app
     ```
 
-2.  **Crie e ative um ambiente virtual:**
+2.  **Configure as variáveis de ambiente:**
+    ```bash
+    cp env.example .env
+    # Edite o arquivo .env com suas configurações
+    # IMPORTANTE: Gere uma nova SECRET_KEY para produção
+    ```
+
+3.  **Crie e ative um ambiente virtual:**
     ```bash
     python3 -m venv .venv
     source .venv/bin/activate
     ```
 
-3.  **Instale as dependências:**
+4.  **Instale as dependências:**
     O arquivo `requirements.txt` contém todos os pacotes Python necessários.
     ```bash
     pip install -r requirements.txt
     ```
 
-4.  **Aplique as migrações do banco de dados:**
+5.  **Aplique as migrações do banco de dados:**
     Isso criará o esquema do banco de dados com base nos modelos definidos.
     ```bash
     python manage.py migrate
     ```
 
-5.  **Inicie o servidor de desenvolvimento:**
+6.  **Inicie o servidor de desenvolvimento:**
     ```bash
     python manage.py runserver
     ```
@@ -72,4 +79,43 @@ Após criar e visualizar seu modelo, você pode exportar o diagrama como PNG:
 2. Clique no botão **"Exportar como PNG"** logo abaixo do diagrama.
 3. O diagrama será baixado como uma imagem PNG, pronta para ser usada em apresentações ou documentação.
 
-O diagrama é renderizado automaticamente usando o Mermaid.js, que já está incluído no projeto. 
+O diagrama é renderizado automaticamente usando o Mermaid.js, que já está incluído no projeto.
+
+## 🔒 Segurança
+
+### ⚠️ **IMPORTANTE PARA PRODUÇÃO:**
+
+1. **Gere uma nova SECRET_KEY:**
+   ```bash
+   python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+   ```
+
+2. **Configure para produção:**
+   ```bash
+   # Para desenvolvimento
+   cp env.example .env
+   
+   # Para produção
+   cp env.production.example .env
+   # Edite o .env com suas configurações reais
+   ```
+
+3. **Verifique a segurança:**
+   ```bash
+   python manage.py check --deploy
+   ```
+
+4. **Configure DEBUG=False em produção**
+
+5. **Use HTTPS em produção**
+
+6. **Configure ALLOWED_HOSTS adequadamente**
+
+7. **Nunca commite arquivos .env com dados reais**
+
+### 🛡️ **Configurações de Segurança:**
+- O projeto usa variáveis de ambiente para configurações sensíveis
+- Arquivos `.env` estão no `.gitignore`
+- Use o arquivo `env.example` para desenvolvimento
+- Use o arquivo `env.production.example` para produção
+- Todas as configurações de segurança são controladas por variáveis de ambiente 
